@@ -34,7 +34,8 @@ elif [[ "$PLATFORM" == "Linux" ]]; then
         pyinstaller --onefile --name ${APP_NAME}_linux_x86_64 $PY_FILE
     fi
 elif [[ "$PLATFORM" =~ MINGW|MSYS|CYGWIN|Windows_NT ]]; then
-    if [[ "$ARCH" == "ARM64" || "$ARCH" == "aarch64" ]]; then
+    # 兼容 ARM64: ARCH 为 ARM64/aarch64 或 PLATFORM 包含 ARM64
+    if [[ "$ARCH" == "ARM64" || "$ARCH" == "aarch64" || "$PLATFORM" == *ARM64* ]]; then
         echo "正在为 Windows ARM64 构建..."
         pyinstaller --onefile --name ${APP_NAME}_win_arm64.exe $PY_FILE
     else

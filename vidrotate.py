@@ -68,7 +68,27 @@ def get_video_orientation(video_path):
     except Exception:
         return 'unknown'
 
-def rotate_video_ffmpeg(input_file, output_file, direction, verbose=False):
+def ffmpeg_supports_videotoolbox():
+    """
+    检查 ffmpeg 是否支持 h264_videotoolbox 编码器。
+    """
+    try:
+        output = subprocess.check_output(['ffmpeg', '-hide_banner', '-encoders'], stderr=subprocess.STDOUT).decode()
+        return 'h264_videotoolbox' in output
+    except Exception:
+        return False
+
+def ffmpeg_supports_nvenc():
+    """
+    检查 ffmpeg 是否支持 h264_nvenc 编码器（NVIDIA GPU）。
+    """
+    try:
+        output = subprocess.check_output(['ffmpeg', '-hide_banner', '-encoders'], stderr=subprocess.STDOUT).decode()
+        return 'h264_nvenc' in output
+    except Exception:
+        return False
+
+def rotate_video_ffmpeg(input_file, output_file, direction, verbose=False, use_gpu=False):
     """
     使用 ffmpeg 旋转视频。
 
@@ -77,18 +97,26 @@ def rotate_video_ffmpeg(input_file, output_file, direction, verbose=False):
         output_file (Path): 输出视频文件路径。
         direction (str): 'left'（逆时针90°）或 'right'（顺时针90°）。
         verbose (bool): 是否显示 ffmpeg 日志。
+        use_gpu (bool): 是否尝试使用 GPU 加速（macOS VideoToolbox/Windows NVIDIA NVENC）。
     """
     if direction == 'left':
         transpose = '2'  # 逆时针
     else:
         transpose = '1'  # 顺时针
     cmd = [
-        'ffmpeg', '-y', '-i', str(input_file), '-vf', f'transpose={transpose}', '-c:a', 'copy', str(output_file)
+        'ffmpeg', '-y', '-i', str(input_file), '-vf', f'transpose={transpose}', '-c:a', 'copy'
     ]
+    sys_platform = platform.system().lower()
+    if use_gpu:
+        # 优先用 NVENC（N卡），否则 macOS 用 VideoToolbox，均加码率限制
+        if ffmpeg_supports_nvenc():
+            cmd += ['-c:v', 'h264_nvenc', '-b:v', '2M']
+        elif sys_platform == 'darwin' and ffmpeg_supports_videotoolbox():
+            cmd += ['-c:v', 'h264_videotoolbox', '-b:v', '2M']
+    cmd.append(str(output_file))
     if verbose:
         subprocess.run(cmd, check=True)
     else:
-        # 只隐藏标准输出，保留错误输出
         subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def copy_video(input_file, output_file):
@@ -161,6 +189,7 @@ def main():
     parser.add_argument('-d', '--direction', type=str, choices=['left', 'right', 'auto'], default='auto', help='旋转方向 left/right/auto，默认auto')
     parser.add_argument('--format', type=str, default=None, help='输出视频格式，如 mp4, avi, mkv 等，默认与输入相同')
     parser.add_argument('-v', '--verbose', action='store_true', help='显示 ffmpeg 详细日志')
+    parser.add_argument('--gpu', action='store_true', help='如支持则启用 GPU 加速（macOS VideoToolbox，Windows NVIDIA NVENC）')
     args = parser.parse_args()
 
     input_files = get_video_files(args.file)
@@ -197,7 +226,7 @@ def main():
         else:
             direction = args.direction
         tqdm.write(f'正在处理: {input_file.name} -> {out_path.name} [{direction}]')
-        rotate_video_ffmpeg(input_file, out_path, direction, verbose=args.verbose)
+        rotate_video_ffmpeg(input_file, out_path, direction, verbose=args.verbose, use_gpu=args.gpu)
     print('全部处理完成！')
 
 if __name__ == '__main__':
