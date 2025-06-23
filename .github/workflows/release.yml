@@ -33,8 +33,8 @@ jobs:
           # Linux ARM64
           - os: linux
             arch: aarch64
-            runner: ubuntu-24.04-arm64
-            artifact-name: vidrotate_linux_arm
+            runner: ubuntu-24.04-arm
+            artifact-name: vidrotate_linux_arm64
           # Windows x86_64
           - os: windows
             arch: x86_64
