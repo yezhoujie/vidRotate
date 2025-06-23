@@ -1,0 +1,95 @@
+# GitHub Actions workflow for building and releasing vidrotate executables for all major platforms and architectures
+# Triggers only on tag push
+
+name: Build & Release vidrotate
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          # macOS Intel
+          - os: macos
+            arch: x86_64
+            runner: macos-latest
+            pyinstaller-arch: x86_64
+            artifact-name: vidrotate_mac_x86_64
+          # macOS ARM
+          - os: macos
+            arch: arm64
+            runner: macos-latest
+            pyinstaller-arch: arm64
+            artifact-name: vidrotate_mac_arm64
+          # Linux x86_64
+          - os: linux
+            arch: x86_64
+            runner: ubuntu-latest
+            pyinstaller-arch: x86_64
+            artifact-name: vidrotate_linux_x86_64
+          # Linux ARM64
+          - os: linux
+            arch: aarch64
+            runner: ubuntu-latest
+            pyinstaller-arch: aarch64
+            artifact-name: vidrotate_linux_arm64
+          # Windows x86_64
+          - os: windows
+            arch: x86_64
+            runner: windows-latest
+            pyinstaller-arch: x86_64
+            artifact-name: vidrotate_win_x86_64.exe
+          # Windows ARM64 (experimental, cross-compile)
+          - os: windows
+            arch: ARM64
+            runner: windows-latest
+            pyinstaller-arch: ARM64
+            artifact-name: vidrotate_win_arm64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13.5'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+          bash build.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: dist/${{ matrix.artifact-name }}*
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/vidrotate*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
