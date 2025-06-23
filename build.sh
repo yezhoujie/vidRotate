@@ -14,6 +14,9 @@ fi
 PLATFORM="$(uname -s)"
 ARCH="$(uname -m)"
 
+echo "当前平台: $PLATFORM"
+echo "当前架构: $ARCH"
+
 if [[ "$PLATFORM" == "Darwin" ]]; then
     if [[ "$ARCH" == "arm64" ]]; then
         echo "正在为 macOS ARM (Apple Silicon) 构建..."
