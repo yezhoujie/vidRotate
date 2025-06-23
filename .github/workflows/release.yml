@@ -18,38 +18,32 @@ jobs:
           # macOS Intel
           - os: macos
             arch: x86_64
-            runner: macos-latest
-            pyinstaller-arch: x86_64
+            runner: macos-13
             artifact-name: vidrotate_mac_x86_64
-          # macOS ARM
+          # macOS ARM (Apple Silicon)
           - os: macos
             arch: arm64
-            runner: macos-latest
-            pyinstaller-arch: arm64
+            runner: macos-14
             artifact-name: vidrotate_mac_arm64
           # Linux x86_64
           - os: linux
             arch: x86_64
-            runner: ubuntu-latest
-            pyinstaller-arch: x86_64
+            runner: ubuntu-22.04
             artifact-name: vidrotate_linux_x86_64
           # Linux ARM64
           - os: linux
             arch: aarch64
-            runner: ubuntu-latest
-            pyinstaller-arch: aarch64
+            runner: ubuntu-24.04-arm64
             artifact-name: vidrotate_linux_arm64
           # Windows x86_64
           - os: windows
             arch: x86_64
-            runner: windows-latest
-            pyinstaller-arch: x86_64
+            runner: windows-2022
             artifact-name: vidrotate_win_x86_64.exe
-          # Windows ARM64 (experimental, cross-compile)
+          # Windows ARM64
           - os: windows
             arch: ARM64
-            runner: windows-latest
-            pyinstaller-arch: ARM64
+            runner: windows-11-arm64
             artifact-name: vidrotate_win_arm64.exe
 
     steps:
