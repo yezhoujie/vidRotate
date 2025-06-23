@@ -34,7 +34,7 @@ jobs:
           - os: linux
             arch: aarch64
             runner: ubuntu-24.04-arm64
-            artifact-name: vidrotate_linux_arm64
+            artifact-name: vidrotate_linux_arm
           # Windows x86_64
           - os: windows
             arch: x86_64
@@ -43,7 +43,7 @@ jobs:
           # Windows ARM64
           - os: windows
             arch: ARM64
-            runner: windows-11-arm64
+            runner: windows-11-arm
             artifact-name: vidrotate_win_arm64.exe
 
     steps:
